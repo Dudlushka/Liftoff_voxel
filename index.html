@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VOX → Group mapper</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>VOX → Group mapper</h1>
+    <p>Load a .vox file, map colors to GP/GRP names from a library JSON, then export a new group.</p>
+  </header>
+
+  <section class="panel">
+    <h2>1. Load files</h2>
+    <div class="field-row">
+      <label for="voxFile">VOX file:</label>
+      <input type="file" id="voxFile" accept=".vox" />
+      <span id="voxStatus" class="status">No VOX loaded</span>
+    </div>
+
+    <div class="field-row">
+      <label for="libFile">Library JSON:</label>
+      <input type="file" id="libFile" accept=".json" />
+      <span id="libStatus" class="status">No library loaded</span>
+    </div>
+
+    <div class="field-row">
+      <label for="voxelSize">Voxel size (world units):</label>
+      <input type="number" id="voxelSize" min="0.01" step="0.01" value="1" />
+    </div>
+
+    <div class="field-row">
+      <label>Model info:</label>
+      <div id="modelInfo" class="mono small">
+        No VOX model parsed yet.
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2. Color → GP/GRP mapping</h2>
+    <p class="small">
+      After loading a VOX file, all used colors will appear below.
+      For each color, choose whether it should spawn a GP or a GRP and select the name from the library.
+    </p>
+
+    <div class="table-wrapper">
+      <table id="colorTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Color</th>
+            <th>Code</th>
+            <th>Voxel count</th>
+            <th>Type</th>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- rows created dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>3. Export group JSON</h2>
+    <div class="field-row">
+      <label for="groupName">New group name:</label>
+      <input type="text" id="groupName" value="VoxelImport01" />
+    </div>
+
+    <div class="field-row">
+      <button id="generateBtn">Generate group JSON</button>
+      <button id="downloadBtn" disabled>Download JSON</button>
+      <span id="generateStatus" class="status"></span>
+    </div>
+
+    <p class="small">
+      The output format matches a single entry in the <code>groups</code> section of your
+      <code>library_1.json</code>. You can copy-paste it into your library file.
+    </p>
+
+    <textarea id="output" rows="14" spellcheck="false"></textarea>
+  </section>
+
+  <footer>
+    <p class="small mono">
+      VOX parser is simplified: it reads SIZE, XYZI and RGBA from the first model found.
+      Adjust coordinate mapping in <code>app.js</code> if needed.
+    </p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
