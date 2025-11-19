@@ -342,87 +342,6 @@ function collectMappings() {
   return mappings;
 }
 
-// --------------------------------------------------
-// Voxel bounds and position helpers
-// --------------------------------------------------
-// --------------------------------------------------
-// Voxel bounds and position helpers
-// --------------------------------------------------
-function computeVoxelBounds(voxels) {
-  // Bounds in VOX coordinates:
-  //   x_vox: right
-  //   y_vox: forward
-  //   z_vox: up
-  let minX = Infinity, maxX = -Infinity;
-  let minY = Infinity, maxY = -Infinity;
-  let minZ = Infinity, maxZ = -Infinity;
-
-  for (const v of voxels) {
-    if (v.x < minX) minX = v.x;
-    if (v.x > maxX) maxX = v.x;
-    if (v.y < minY) minY = v.y;
-    if (v.y > maxY) maxY = v.y;
-    if (v.z < minZ) minZ = v.z;
-    if (v.z > maxZ) maxZ = v.z;
-  }
-
-  return { minX, maxX, minY, maxY, minZ, maxZ };
-}
-
-/**
- * Convert VOX voxel coords (v.x, v.y, v.z) to world coords.
- *
- * VOX (right-handed):
- *   x_vox: right
- *   y_vox: forward
- *   z_vox: up
- *
- * Game / group world (left-handed):
- *   X: sideways
- *   Y: up
- *   Z: forward
- *
- * Mapping:
- *   X_world = X_vox
- *   Y_world = Z_vox
- *   Z_world = Y_vox
- *
- * Centering:
- *   - model centered around (0,0) in X/Z
- *   - in Y:
- *      alignYToGround = true  -> lowest layer bottom rests on Y=0
- *      alignYToGround = false -> keep original VOX height
- *
- * Each voxel is a cube with size "size":
- *   - X/Z: position is at cube center (±size/2 extents)
- *   - Y:   position is at cube bottom
- */
-function voxelToWorld(v, size, bounds, alignYToGround = true) {
-  const { minX, maxX, minY, maxY, minZ, maxZ } = bounds;
-
-  // Center of the model in world X/Z:
-  //   X_world is based on x_vox
-  //   Z_world is based on y_vox
-  const centerX = ((minX + maxX) / 2 + 0.5) * size; // x_vox center
-  const centerZ = ((minY + maxY) / 2 + 0.5) * size; // y_vox center
-
-  // Y offset:
-  //   VOX z_vox is "up" -> maps to world Y.
-  //   If alignYToGround: lowest z_vox layer bottom is at Y=0.
-  const groundOffsetY = alignYToGround ? (minZ * size) : 0;
-
-  // VOX voxel -> world:
-  //   X_world = (x_vox + 0.5) * size - centerX
-  //   Z_world = (y_vox + 0.5) * size - centerZ
-  //   Y_world =  z_vox        * size - groundOffsetY
-  const px = (v.x + 0.5) * size - centerX;
-  const pz = (v.y + 0.5) * size - centerZ;
-  const py = v.z * size - groundOffsetY;
-
-  return [px, py, pz];
-}
-
-
 function generateGroupJSON() {
   ui.generateStatus.textContent = "";
 
@@ -441,12 +360,6 @@ function generateGroupJSON() {
   const size = parseFloat(ui.voxelSize.value) || 1.0;
   const { voxels } = voxModel;
 
-  // Bounds in VOX coordinates
-  const bounds = computeVoxelBounds(voxels);
-
-  // Default: stand on the ground (lowest layer bottom at Y=0)
-  const alignYToGround = true; // change to false if you want VOX Y preserved
-
   const items = [];
 
   for (const v of voxels) {
@@ -457,7 +370,12 @@ function generateGroupJSON() {
 
     const { refType, refName } = map;
 
-    const [px, py, pz] = voxelToWorld(v, size, bounds, alignYToGround);
+    // Coordinate mapping:
+    // Here we use a simple mapping: x -> x, y -> y, z -> z (scaled).
+    // Adjust this mapping if your game uses a different axis convention.
+    const px = v.x * size;
+    const py = v.y * size;
+    const pz = v.z * size;
 
     items.push({
       refType,
@@ -473,6 +391,7 @@ function generateGroupJSON() {
     items
   };
 
+  // Wrap it in a "groups" object to match your library JSON style.
   const out = {
     groups: {
       [groupName]: group
@@ -484,7 +403,6 @@ function generateGroupJSON() {
   ui.generateStatus.textContent = `Generated group with ${items.length} items.`;
   ui.downloadBtn.disabled = false;
 }
-
 
 // --------------------------------------------------
 // Download helper
